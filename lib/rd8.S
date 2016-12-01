@@ -4,9 +4,9 @@
 # changes: a0
 
     .text
-    .global _ResetVector
+    .global _start
 
-_ResetVector:
+_start:
     rsr a0, ddr
     l8ui a0, a0, 0
     wsr a0, ddr

@@ -4,8 +4,8 @@
 # changes: None
 
     .text
-    .global _ResetVector
+    .global _start
 
-_ResetVector:
+_start:
     wsr a0, ddr
     wsr a1, ddr

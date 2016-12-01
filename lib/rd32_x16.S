@@ -4,14 +4,14 @@
 # changes: a0, a1
 
     .text
-    .global _ResetVector
+    .global _start
 
 # TODO - optimise for use with instruction caching
 #    l32i a1, a0, 0
 #    wsr a1, ddr
 #    addi a0, a0, 4
 
-_ResetVector:
+_start:
     rsr a0, ddr
     l32i a1, a0, 0
     wsr a1, ddr
