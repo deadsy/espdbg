@@ -1,0 +1,162 @@
+#!/usr/bin/python
+# -----------------------------------------------------------------------------
+"""
+
+assembly to python
+
+Generate a tuple of 32-bit opcode values for an assembly language routine.
+
+32-bit buffer transfers to target memory are generally the fastest so
+we generate the output in this form.
+
+"""
+# -----------------------------------------------------------------------------
+
+import sys
+import os
+import subprocess
+import getopt
+
+# -----------------------------------------------------------------------------
+# cross compilation tools
+
+tool_path = '/opt/xtensa-esp32-elf/bin/'
+cmd_prefix = 'xtensa-esp32-elf-'
+
+cpp_tool = tool_path + cmd_prefix + 'cpp'
+as_tool = tool_path + cmd_prefix + 'as'
+gcc_tool = tool_path + cmd_prefix + 'gcc'
+objcopy_tool = tool_path + cmd_prefix + 'objcopy'
+
+# -----------------------------------------------------------------------------
+
+default_load_adr = 0x20000000
+load_adr = None
+asm_fname = None
+
+# -----------------------------------------------------------------------------
+
+def process(asm_fname):
+
+  basename = asm_fname.split('.')[0]
+  obj_fname = basename + '.o'
+  elf_fname = basename + '.elf'
+  bin_fname = basename + '.bin'
+
+  # assemble the *.S file
+  # cpp $< | as -o $@
+  cmd = '%s %s | %s -o %s' % (cpp_tool, asm_fname, as_tool, obj_fname)
+  rc = subprocess.call(cmd, shell = True)
+  if rc != 0:
+    return
+
+  # link the object to resolve branch labels
+  # gcc $(FLAGS) $< -o $@
+  flags = '-static -nostdinc -nostartfiles -nodefaultlibs -nostdlib -ffreestanding '
+  flags += '-Xlinker --section-start=.text=0x%08x ' % load_adr
+  flags += '-Xlinker --entry=0x%08x ' % load_adr
+  cmd = '%s %s %s -o %s' % (gcc_tool, flags, obj_fname, elf_fname)
+  rc = subprocess.call(cmd, shell = True)
+  if rc != 0:
+    return
+
+  # dump the text segment binary
+  # objcopy -j .text $< -O binary $@
+  cmd = '%s -j .text %s -O binary %s' % (objcopy_tool, elf_fname, bin_fname)
+  rc = subprocess.call(cmd, shell = True)
+  if rc != 0:
+    return
+
+  # get the binary data
+  f = file(bin_fname, 'rb')
+  x = f.read()
+  f.close()
+
+  # file cleanup
+  os.remove(obj_fname)
+  os.remove(elf_fname)
+  os.remove(bin_fname)
+
+  # convert to an 8-bit buffer
+  buf8 = [ord(c) for c in x]
+
+  # check length
+  n = len(buf8)
+  if n == 0:
+    # no data
+    return
+
+  # pad with zeroes to 32 bits
+  if n & 3:
+    buf8.extend((0,) * (4 - (n & 3)))
+
+  # convert to 32-bit little endian
+  buf32 = [(buf8[i] << 0) | (buf8[i + 1] << 8) | (buf8[i + 2] << 16) | (buf8[i + 3] << 24) for i in xrange(0, len(buf8), 4)]
+
+  # output the library routine as a python dictionary
+  print('%s = {' % basename)
+  print("  'load': 0x%08x," % load_adr)
+  print("  'entry': 0x%08x," % load_adr)
+  print("  'code': (")
+  print '\n'.join(['    0x%08x,' % x for x in buf32])
+  print('  ),')
+  print('}')
+
+# -----------------------------------------------------------------------------
+
+def pr_usage():
+  sys.stderr.write('Usage: %s [options] <file>\n' % sys.argv[0])
+  sys.stderr.write('%-15s%s\n' % ('-l <address>', 'load address (default 0x%08x)' % default_load_adr))
+
+def pr_err(msg, usage = False):
+  sys.stderr.write('error: %s\n' % msg)
+  if usage:
+    pr_usage()
+  sys.exit(1)
+
+def Process_Options(argv):
+  """process command line options"""
+  global load_adr
+  global asm_fname
+
+  # set the default load address
+  load_adr = default_load_adr
+
+  try:
+    (opts, args) = getopt.getopt(sys.argv[1:], "l:")
+  except getopt.GetoptError, err:
+    pr_err(str(err), True)
+  # process options
+  for (opt, val) in opts:
+    if opt == '-l':
+      try:
+        load_adr = int(val, 16)
+      except:
+        pr_err('invalid load address')
+        sys.exit(1)
+
+  # check for a filename
+  if len(args) != 1:
+    pr_err('provide an input file', True)
+
+  # check the file
+  asm_fname = args[0]
+  if not os.path.isfile(asm_fname):
+    pr_err('file %s not found' % asm_fname)
+
+# -----------------------------------------------------------------------------
+
+def main():
+
+  # check the tools
+  if not os.path.isfile(gcc_tool):
+    pr_err('%s not found, fix the tool path' % gcc_tool)
+
+  Process_Options(sys.argv)
+  process(asm_fname)
+
+main()
+
+# -----------------------------------------------------------------------------
+
+
