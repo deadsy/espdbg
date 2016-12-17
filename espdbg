@@ -1,0 +1,188 @@
+#!/usr/bin/python
+# -----------------------------------------------------------------------------
+"""
+espdbg - Python Based Debugger for esp32/esp8266 based boards.
+"""
+# -----------------------------------------------------------------------------
+
+import os
+import sys
+import getopt
+import importlib
+
+import cli
+import linenoise
+import util
+
+# -----------------------------------------------------------------------------
+
+_version_str = 'espdbg: esp32/8266 Debug Tool 1.0\n'
+_vidpid = None
+_target = None
+
+# -----------------------------------------------------------------------------
+
+def target_description(target):
+  """return the target description"""
+  module = importlib.import_module('target.%s' % target)
+  doc = module.__doc__
+  lines = doc.split('\n')
+  # find the first non-null line
+  for l in lines:
+    if len(l):
+      return l
+
+def supported_targets():
+  """return a list of supported targets"""
+  targets = []
+  for f in os.listdir('target'):
+    name = f.split('.')
+    if name[1] == 'py' and name[0] != '__init__':
+      targets.append(['  %s' % name[0], ': %s' % target_description(name[0])])
+  return sorted(targets)
+
+# -----------------------------------------------------------------------------
+# command line argument processing
+
+def int_arg(arg, limits, base):
+  """convert a number string to an integer - or None"""
+  try:
+    val = int(arg, base)
+  except ValueError:
+    return None
+  if (val < limits[0]) or (val > limits[1]):
+    return None
+  return val
+
+def vid_pid_arg(arg):
+  """convert a usb 'vid:pid' string into a (vid, pid) tuple"""
+  x = arg.split(':')
+  if len(x) != 2:
+    return None
+  # convert and check the vid
+  vid = int_arg(x[0], (0, 0xffff), 16)
+  if vid is None:
+    return None
+  # convert and check the pid
+  pid = int_arg(x[1], (0, 0xffff), 16)
+  if pid is None:
+    return None
+  return (vid, pid)
+
+# -----------------------------------------------------------------------------
+
+def Print_Usage(argv):
+  print 'Usage: %s [options]' % argv[0]
+  print 'Options:'
+  print '%-15s%s' % ('-l', 'list supported targets')
+  print '%-15s%s' % ('-t <target>', 'target name')
+  print '%-15s%s' % ('-d <vid:pid>', 'vid:pid of usb device')
+
+def error(msg, usage=False):
+  print msg
+  if usage:
+    Print_Usage(sys.argv)
+  sys.exit(1)
+
+def Process_Options(argv):
+  """process command line options"""
+  global _vidpid
+  global _target
+
+  list_targets = False
+  vp_arg = None
+
+  try:
+    (opts, args) = getopt.getopt(argv[1:], "t:d:l")
+  except getopt.GetoptError, err:
+    error(str(err), True)
+  # process options
+  for (opt, val) in opts:
+    if opt == '-d':
+      vp_arg = val
+    elif opt == '-t':
+      _target = val
+    elif opt == '-l':
+      list_targets = True
+
+  # validate arguments
+  targets = supported_targets()
+
+  if list_targets:
+    error('supported targets:\n%s' % util.display_cols(targets))
+
+  if _target is None:
+    error('must specify a target', True)
+
+  if _target not in [t[0].strip() for t in targets]:
+    error('supported targets:\n%s' % util.display_cols(targets))
+
+  if vp_arg is not None:
+    x = vid_pid_arg(vp_arg)
+    if x is None:
+      error('invalid vid:pid argument')
+    _vidpid = x
+
+
+# -----------------------------------------------------------------------------
+
+def get_dbgio(target):
+  """return a debug interface for this target"""
+  return None
+
+# -----------------------------------------------------------------------------
+
+class user_interface(object):
+
+  def __init__(self):
+    self.cli = cli.cli(self, 'history.txt')
+
+  def find_target(self, target):
+    """find and select a target"""
+    target = importlib.import_module('target.%s' % target)
+    target.target(self, get_dbgio(target))
+
+  def exit(self):
+    self.cli.exit()
+
+  def put(self, s):
+    sys.stdout.write(s)
+
+  def poll(self):
+    # poll the input during an operation
+    # use a short timeout so we don't peg the cpu
+    return linenoise.poll(0.01)
+
+  def run(self):
+    self.cli.run()
+
+  def close(self):
+    pass
+
+  def cmd_help(self, ui, args):
+    """general help"""
+    self.cli.general_help()
+
+  def cmd_history(self, ui, args):
+    """command history"""
+    return self.cli.display_history(args)
+
+#-----------------------------------------------------------------------------
+
+def main():
+  Process_Options(sys.argv)
+  ui = user_interface()
+  ui.put('\n%s' % _version_str)
+  if _target:
+    ui.find_target(_target)
+  try:
+    ui.run()
+  except:
+    ui.close()
+    raise
+  ui.close()
+  sys.exit(0)
+
+main()
+
+# -----------------------------------------------------------------------------
