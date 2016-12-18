@@ -1,12 +1,7 @@
 #------------------------------------------------------------------------------
 """
 FT2232 Based JTAG Drivers
-
-Note:
 This code uses ftdi.py and usbtools.py both taken from the pyftdi project.
-The pyftdi project has some JTAG functions but the JTAG api and their
-method for storing bit streams is different from the rest of this code,
-so I've only borrowed the ftdi specific portions.
 """
 #-----------------------------------------------------------------------------
 
@@ -14,8 +9,8 @@ import time
 import array
 import sys
 import tap
-from ftdi import Ftdi
-import usbtools
+from usbtools.ftdi import Ftdi
+from usbtools.usbtools import UsbTools
 
 #------------------------------------------------------------------------------
 
@@ -66,24 +61,24 @@ def _lsb(val): return val & 255
 # tms bit sequences
 
 def tms_mpsse(bits):
-    """convert a tms bit sequence to an mpsee (len, bits) tuple"""
-    n = len(bits)
-    assert (n > 0) and (n <= 7)
-    x = 0
-    # tms is shifted lsb first
-    for i in range(n - 1, -1, -1):
-        x = (x << 1) + bits[i]
-    # only bits 0 thru 6 are shifted on tms - tdi is set to bit 7 (and is left there)
-    # len = n means clock out n + 1 bits
-    return (n - 1, x & 127)
+  """convert a tms bit sequence to an mpsee (len, bits) tuple"""
+  n = len(bits)
+  assert (n > 0) and (n <= 7)
+  x = 0
+  # tms is shifted lsb first
+  for i in range(n - 1, -1, -1):
+    x = (x << 1) + bits[i]
+  # only bits 0 thru 6 are shifted on tms - tdi is set to bit 7 (and is left there)
+  # len = n means clock out n + 1 bits
+  return (n - 1, x & 127)
 
 #------------------------------------------------------------------------------
 
-class ft2232:
+class ft2232(object):
 
     def open_ft2232(self, vps, itf, sn):
         # find the device on USB
-        devices = usbtools.UsbTools.find_all(vps)
+        devices = UsbTools.find_all(vps)
         if sn is not None:
             # filter based on device serial number
             devices = [dev for dev in devices if dev[2] == sn]
@@ -279,45 +274,67 @@ _SRST_N_OE_N = _GPIOH3
 
 # usb vendor:product IDs
 _jtagkey_vps = (
-    (0x0403, 0x6010), # bus blaster jtagkey emulation
-    (0x0403, 0xcff8), # amontec jtagkey
+  (0x0403, 0x6010), # bus blaster jtagkey emulation
+  (0x0403, 0xcff8), # amontec jtagkey
 )
 
 _jtagkey_itf = 1 # external jtag is on the first interface
 
 class jtagkey(ft2232):
 
-    def __init__(self, sn = None):
-        """initialise the JTAGkey device"""
-        self.open_ft2232(_jtagkey_vps, _jtagkey_itf, sn)
-        # deassert resets
-        self.gpio_wr(_TRST_N_OUT, 1)
-        self.gpio_wr(_SRST_N_OUT, 1)
-        # enable outputs
-        self.gpio_wr(_TRST_N_OE_N, 0)
-        self.gpio_wr(_SRST_N_OE_N, 0)
-        self.gpio_wr(_JTAG_OE_N, 0)
-        # check VREF and SRST
-        assert self.gpio_rd(_VREF_N_IN) == False, '~VREF signal is not asserted. Target is disconnected or powered off.'
-        assert self.gpio_rd(_SRST_N_IN) == True, '~SRST signal is asserted. Target is held in reset.'
+  def __init__(self, sn):
+    """initialise the JTAGkey device"""
+    self.open_ft2232(_jtagkey_vps, _jtagkey_itf, sn)
+    # deassert resets
+    self.gpio_wr(_TRST_N_OUT, 1)
+    self.gpio_wr(_SRST_N_OUT, 1)
+    # enable outputs
+    self.gpio_wr(_TRST_N_OE_N, 0)
+    self.gpio_wr(_SRST_N_OE_N, 0)
+    self.gpio_wr(_JTAG_OE_N, 0)
+    # check VREF and SRST
+    assert self.gpio_rd(_VREF_N_IN) == False, '~VREF signal is not asserted. Target is disconnected or powered off.'
+    assert self.gpio_rd(_SRST_N_IN) == True, '~SRST signal is asserted. Target is held in reset.'
 
-    def trst(self):
-        """pulse the test reset line"""
-        self.gpio_wr(_TRST_N_OUT, 0)
-        time.sleep(_TRST_TIME)
-        self.gpio_wr(_TRST_N_OUT, 1)
-        self.state_reset()
+  def trst(self):
+    """pulse the test reset line"""
+    self.gpio_wr(_TRST_N_OUT, 0)
+    time.sleep(_TRST_TIME)
+    self.gpio_wr(_TRST_N_OUT, 1)
+    self.state_reset()
 
-    def srst(self):
-        """pulse the system reset line"""
-        self.gpio_wr(_SRST_N_OUT, 0)
-        time.sleep(_SRST_TIME)
-        self.gpio_wr(_SRST_N_OUT, 1)
+  def srst(self):
+    """pulse the system reset line"""
+    self.gpio_wr(_SRST_N_OUT, 0)
+    time.sleep(_SRST_TIME)
+    self.gpio_wr(_SRST_N_OUT, 1)
 
-    def __str__(self):
-        s = []
-        s.append('JTAGKey usb %04x:%04x serial %r' % (self.vid, self.pid, self.sn))
-        s.append('%s @ %.1f MHz' % (self.ftdi.ic_name, (self.freq / _MHz)))
-        return ', '.join(s)
+  def __str__(self):
+    s = []
+    s.append('JTAGKey usb %04x:%04x serial %r' % (self.vid, self.pid, self.sn))
+    s.append('%s @ %.1f MHz' % (self.ftdi.ic_name, (self.freq / _MHz)))
+    return ', '.join(s)
+
+class jtagkey_dbgio(object):
+
+  def __init__(self, sn = None):
+    self.menu = (
+      ('info', self.cmd_info),
+      ('srst', self.cmd_srst),
+      ('trst', self.cmd_trst),
+    )
+    self.io = jtagkey(sn)
+
+  def cmd_info(self, ui, args):
+    """display jtag information"""
+    ui.put('%s\n' % self.io)
+
+  def cmd_srst(self, ui, args):
+    """pulse the system reset line"""
+    self.io.srst()
+
+  def cmd_trst(self, ui, args):
+    """pulse the test reset line"""
+    self.io.trst()
 
 #------------------------------------------------------------------------------

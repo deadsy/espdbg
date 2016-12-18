@@ -14,6 +14,8 @@ import cli
 import linenoise
 import util
 
+import ft2232
+
 # -----------------------------------------------------------------------------
 
 _version_str = 'espdbg: esp32/8266 Debug Tool 1.0\n'
@@ -128,7 +130,11 @@ def Process_Options(argv):
 
 def get_dbgio(target):
   """return a debug interface for this target"""
-  return None
+  itf = target.default_itf
+  if itf['name'] == 'jtagkey':
+    return ft2232.jtagkey_dbgio()
+  else:
+    return None
 
 # -----------------------------------------------------------------------------
 
@@ -172,7 +178,7 @@ class user_interface(object):
 def main():
   Process_Options(sys.argv)
   ui = user_interface()
-  ui.put('\n%s' % _version_str)
+  ui.put('%s' % _version_str)
   if _target:
     ui.find_target(_target)
   try:

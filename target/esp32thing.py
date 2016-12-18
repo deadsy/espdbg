@@ -13,6 +13,13 @@ import cli
 prompt = 'esp32thing'
 
 # -----------------------------------------------------------------------------
+
+# TODO make more general
+default_itf = {
+  'name': 'jtagkey',
+}
+
+# -----------------------------------------------------------------------------
 """
 
 Board Pins
@@ -59,6 +66,13 @@ J2.18 = U0TXD
 J2.19 = GPIO21
 J2.20 = GND
 
+
+Connection to ARM 20 Pin JTAG:
+
+20 (GND) - GND
+15 (RESET) - ~RST
+1 (Vcc) - 3.3V
+
 """
 # -----------------------------------------------------------------------------
 
@@ -70,6 +84,7 @@ class target(object):
     self.dbgio = dbgio
 
     self.menu_root = (
+      ('jtag', self.dbgio.menu, 'jtag functions'),
       ('exit', self.cmd_exit),
       ('help', self.ui.cmd_help),
       ('history', self.ui.cmd_history, cli.history_help),
@@ -80,12 +95,13 @@ class target(object):
     self.dbgio.cmd_info(self.ui, None)
 
   def set_prompt(self):
-    indicator = ('*', '')[self.dbgio.is_halted()]
+    # TODO get a run/halt state
+    #indicator = ('*', '')[self.dbgio.is_halted()]
+    indicator = ''
     self.ui.cli.set_prompt('%s%s> ' % (prompt, indicator))
 
   def cmd_exit(self, ui, args):
     """exit application"""
-    self.dbgio.disconnect()
     ui.exit()
 
 # -----------------------------------------------------------------------------
