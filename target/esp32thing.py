@@ -7,6 +7,7 @@ SparkFun ESP32 Thing (ESP3212)
 # -----------------------------------------------------------------------------
 
 import cli
+import jtag
 
 # -----------------------------------------------------------------------------
 
@@ -66,12 +67,15 @@ J2.18 = U0TXD
 J2.19 = GPIO21
 J2.20 = GND
 
-
 Connection to ARM 20 Pin JTAG:
 
 20 (GND) - GND
 15 (RESET) - ~RST
 1 (Vcc) - 3.3V
+5 (TDI) - GPIO12/MTDI
+7 (TMS) - GPIO14/MTMS
+9 (TCK) - GPIO13/MTCK
+13 (TDO) - GPIO15/MTDO
 
 """
 # -----------------------------------------------------------------------------
@@ -79,12 +83,14 @@ Connection to ARM 20 Pin JTAG:
 class target(object):
   """esp32thing- SparkFun ESP32 Thing Board with ESP3212"""
 
-  def __init__(self, ui, dbgio):
+  def __init__(self, ui, jtag_driver):
     self.ui = ui
-    self.dbgio = dbgio
+    self.jtag_driver  = jtag_driver
+    self.jtag_chain = jtag.jtag(self.jtag_driver)
+    self.jtag_chain.scan(jtag.IDCODE_XTENSA)
 
     self.menu_root = (
-      ('jtag', self.dbgio.menu, 'jtag functions'),
+      ('jtag', self.jtag_driver.menu, 'jtag functions'),
       ('exit', self.cmd_exit),
       ('help', self.ui.cmd_help),
       ('history', self.ui.cmd_history, cli.history_help),
@@ -92,7 +98,7 @@ class target(object):
 
     self.ui.cli.set_root(self.menu_root)
     self.set_prompt()
-    self.dbgio.cmd_info(self.ui, None)
+    self.jtag_driver.cmd_info(self.ui, None)
 
   def set_prompt(self):
     # TODO get a run/halt state

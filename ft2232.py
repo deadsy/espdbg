@@ -282,7 +282,7 @@ _jtagkey_itf = 1 # external jtag is on the first interface
 
 class jtagkey(ft2232):
 
-  def __init__(self, sn):
+  def __init__(self, sn = None):
     """initialise the JTAGkey device"""
     self.open_ft2232(_jtagkey_vps, _jtagkey_itf, sn)
     # deassert resets
@@ -295,6 +295,12 @@ class jtagkey(ft2232):
     # check VREF and SRST
     assert self.gpio_rd(_VREF_N_IN) == False, '~VREF signal is not asserted. Target is disconnected or powered off.'
     assert self.gpio_rd(_SRST_N_IN) == True, '~SRST signal is asserted. Target is held in reset.'
+
+    self.menu = (
+      ('info', self.cmd_info),
+      ('srst', self.cmd_srst),
+      ('trst', self.cmd_trst),
+    )
 
   def trst(self):
     """pulse the test reset line"""
@@ -309,25 +315,9 @@ class jtagkey(ft2232):
     time.sleep(_SRST_TIME)
     self.gpio_wr(_SRST_N_OUT, 1)
 
-  def __str__(self):
-    s = []
-    s.append('JTAGKey usb %04x:%04x serial %r' % (self.vid, self.pid, self.sn))
-    s.append('%s @ %.1f MHz' % (self.ftdi.ic_name, (self.freq / _MHz)))
-    return ', '.join(s)
-
-class jtagkey_dbgio(object):
-
-  def __init__(self, sn = None):
-    self.menu = (
-      ('info', self.cmd_info),
-      ('srst', self.cmd_srst),
-      ('trst', self.cmd_trst),
-    )
-    self.io = jtagkey(sn)
-
   def cmd_info(self, ui, args):
     """display jtag information"""
-    ui.put('%s\n' % self.io)
+    ui.put('%s\n' % self)
 
   def cmd_srst(self, ui, args):
     """pulse the system reset line"""
@@ -336,5 +326,11 @@ class jtagkey_dbgio(object):
   def cmd_trst(self, ui, args):
     """pulse the test reset line"""
     self.io.trst()
+
+  def __str__(self):
+    s = []
+    s.append('JTAGKey usb %04x:%04x serial %r' % (self.vid, self.pid, self.sn))
+    s.append('%s @ %.1f MHz' % (self.ftdi.ic_name, (self.freq / _MHz)))
+    return ', '.join(s)
 
 #------------------------------------------------------------------------------

@@ -132,7 +132,7 @@ def get_dbgio(target):
   """return a debug interface for this target"""
   itf = target.default_itf
   if itf['name'] == 'jtagkey':
-    return ft2232.jtagkey_dbgio()
+    return ft2232.jtagkey()
   else:
     return None
 
