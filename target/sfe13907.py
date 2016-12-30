@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 """
 
-SparkFun ESP32 Thing (ESP3212)
+SparkFun DEV-13907 ESP32 Thing (ESP3212)
 
 Board Pins
 
@@ -65,7 +65,7 @@ import esp32
 
 # -----------------------------------------------------------------------------
 
-prompt = 'esp32thing'
+prompt = 'sfe13907'
 
 # -----------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ _ir_chain = (esp32.XTENSA_IRLEN, esp32.XTENSA_IRLEN)
 # -----------------------------------------------------------------------------
 
 class target(object):
-  """esp32thing- SparkFun ESP32 Thing Board with ESP3212"""
+  """sfe13907- SparkFun ESP32 Thing Board with ESP3212"""
 
   def __init__(self, ui, jtag_driver):
     self.ui = ui
