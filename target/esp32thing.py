@@ -3,26 +3,6 @@
 
 SparkFun ESP32 Thing (ESP3212)
 
-"""
-# -----------------------------------------------------------------------------
-
-import cli
-import jtag
-
-# -----------------------------------------------------------------------------
-
-prompt = 'esp32thing'
-
-# -----------------------------------------------------------------------------
-
-# TODO make more general
-default_itf = {
-  'name': 'jtagkey',
-}
-
-# -----------------------------------------------------------------------------
-"""
-
 Board Pins
 
 J1.1 = GND
@@ -80,16 +60,38 @@ Connection to ARM 20 Pin JTAG:
 """
 # -----------------------------------------------------------------------------
 
+import cli
+import esp32
+
+# -----------------------------------------------------------------------------
+
+prompt = 'esp32thing'
+
+# -----------------------------------------------------------------------------
+
+# TODO make more general
+default_itf = {
+  'name': 'jtagkey',
+}
+
+# -----------------------------------------------------------------------------
+
+# The ESP32 is the only device on the JTAG chain for this target
+_ofs = 0
+_ir_chain = (esp32.XTENSA_IRLEN, esp32.XTENSA_IRLEN)
+
+# -----------------------------------------------------------------------------
+
 class target(object):
   """esp32thing- SparkFun ESP32 Thing Board with ESP3212"""
 
   def __init__(self, ui, jtag_driver):
     self.ui = ui
     self.jtag_driver  = jtag_driver
-    self.jtag_chain = jtag.jtag(self.jtag_driver)
-    self.jtag_chain.scan(jtag.IDCODE_XTENSA)
+    self.esp32 = esp32.esp32(jtag_driver, _ofs, _ir_chain)
 
     self.menu_root = (
+      ('esp32', self.esp32.menu, 'esp32 functions'),
       ('jtag', self.jtag_driver.menu, 'jtag functions'),
       ('exit', self.cmd_exit),
       ('help', self.ui.cmd_help),
