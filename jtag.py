@@ -19,7 +19,7 @@ _idcode_length = 32
 
 #-----------------------------------------------------------------------------
 
-class chain(object):
+class device(object):
   """interface to specific device on the JTAG chain"""
 
   def __init__(self, driver, ofs, ir_chain, idcode):
@@ -99,116 +99,6 @@ class chain(object):
     self.driver.scan_dr(tdi, tdo)
     return tdo.scan((_idcode_length, ) * self.ndevs)
 
-  def irchain_str(self):
-    """return a descriptive string for the irchain"""
-    s = []
-    if self.irlen_before:
-      s.append('%d' % self.irlen_before)
-    s.append('(%d)' % self.irlen)
-    if self.irlen_after:
-      s.append('%d' % self.irlen_after)
-    return ','.join(s)
-
-  def __str__(self):
-    """return a string describing the jtag device"""
-    s = []
-    s.append('device %d' % self.ndevs_before)
-    s.append('idcode 0x%08x' % self.idcode)
-    s.append('irchain %s' % self.irchain_str())
-    return ' '.join(s)
-
-#-----------------------------------------------------------------------------
-
-class jtag(object):
-
-  def __init__(self, driver):
-    self.driver = driver
-
-  def scan(self, idcode_x):
-    """try to find the device with idcode on the jtag chain"""
-    self.driver.trst()
-    self.ndevs = self.num_devices()
-    print self.ndevs
-    self.irlen_total = self.ir_length()
-    self.idcode = IDCODE_NO_DEVICE
-    self.ndevs_before = 0
-    self.ndevs_after = 0
-    self.irlen_before = 0
-    self.irlen_after = 0
-    found = False
-    chain_idcodes = self.reset_idcodes()
-    for idcode in chain_idcodes:
-      (name, irlen, mask) = lookup_device(idcode)
-      if name == 'unknown':
-        raise Error, 'unknown device on jtag chain - idcode 0x%08x' % idcode
-      if idcode_x == idcode & mask:
-        # found the target device
-        found = True
-        self.irlen = irlen
-        self.idcode = idcode
-        self.name = name
-        continue
-      if found:
-        # after the target device
-        self.irlen_after += irlen
-        self.ndevs_after += 1
-      else:
-        # before the target device
-        self.irlen_before += irlen
-        self.ndevs_before += 1
-    if not found:
-      raise Error, 'unable to find idcode 0x%08x on jtag chain (found %s)' % (idcode_x, ', '.join(['0x%08x' % v for v in chain_idcodes]))
-    if (self.irlen_before + self.irlen + self.irlen_after) != self.irlen_total:
-      raise Error, 'incorrect ir lengths - %d + (%d) + %d != %d' % (self.irlen_before, self.irlen, self.irlen_after, self.irlen_total)
-
-  def num_devices(self):
-    """return the number of JTAG devices in the chain"""
-    # put every device into bypass mode (IR = all 1's)
-    tdi = bits.bits()
-    tdi.ones(_flush_size)
-    self.driver.scan_ir(tdi)
-    # now each DR is a single bit
-    # the DR chain length is the number of devices
-    return self.dr_length()
-
-  def chain_length(self, scan):
-    """return the length of the JTAG chain"""
-    tdo = bits.bits()
-    # build a 000...001000...000 flush buffer for tdi
-    tdi = bits.bits()
-    tdi.append_zeroes(_flush_size)
-    tdi.append_ones(1)
-    tdi.append_zeroes(_flush_size)
-    scan(tdi, tdo)
-    # the first bits are junk
-    tdo.drop_lsb(_flush_size)
-    # work out how many bits tdo is behind tdi
-    s = tdo.bit_str()
-    s = s.lstrip('0')
-    if len(s.replace('0', '')) != 1:
-      raise Error, 'unexpected result from jtag chain - multiple 1\'s'
-    return len(s) - 1
-
-  def dr_length(self):
-    """
-    return the length of the DR chain
-    note: DR chain length is a function of current IR chain state
-    """
-    return self.chain_length(self.driver.scan_dr)
-
-  def ir_length(self):
-    """return the length of the ir chain"""
-    return self.chain_length(self.driver.scan_ir)
-
-  def reset_idcodes(self):
-    """return a tuple of the idcodes for the JTAG chain"""
-    # a JTAG reset leaves DR as the 32 bit idcode for each device.
-    self.driver.trst()
-    tdi = bits.bits(self.ndevs * _idcode_length)
-    tdo = bits.bits()
-    self.driver.scan_dr(tdi, tdo)
-    return tdo.scan((_idcode_length, ) * self.ndevs)
-
   def wr_ir(self, wr):
     """
     write to IR for a device
@@ -265,13 +155,22 @@ class jtag(object):
     rd.drop_msb(self.ndevs_before)
     rd.drop_lsb(self.ndevs_after)
 
-  def __str__(self):
-    """return a string describing the jtag chain"""
+  def irchain_str(self):
+    """return a descriptive string for the irchain"""
     s = []
-    s.append('device: idcode 0x%08x ir length %d bits - %s' % (self.idcode, self.irlen, self.name))
-    if self.ndevs > 1:
-      s.append('chain: %d devices, %d before %d after' % (self.ndevs, self.ndevs_before, self.ndevs_after))
-      s.append('chain: %d ir bits total, %d before %d after' % (self.irlen_total, self.irlen_before, self.irlen_after))
-    return '\n'.join(s)
+    if self.irlen_before:
+      s.append('%d' % self.irlen_before)
+    s.append('(%d)' % self.irlen)
+    if self.irlen_after:
+      s.append('%d' % self.irlen_after)
+    return ','.join(s)
+
+  def __str__(self):
+    """return a string describing the jtag device"""
+    s = []
+    s.append('device %d' % self.ndevs_before)
+    s.append('idcode 0x%08x' % self.idcode)
+    s.append('irchain %s' % self.irchain_str())
+    return ' '.join(s)
 
 #-----------------------------------------------------------------------------

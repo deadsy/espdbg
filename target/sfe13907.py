@@ -62,6 +62,7 @@ Connection to ARM 20 Pin JTAG:
 
 import cli
 import esp32
+import mem
 
 # -----------------------------------------------------------------------------
 
@@ -87,15 +88,19 @@ class target(object):
 
   def __init__(self, ui, jtag_driver):
     self.ui = ui
-    self.jtag_driver  = jtag_driver
-    self.esp32 = esp32.esp32(jtag_driver, _ofs, _ir_chain)
+    self.jtag_driver = jtag_driver
+    self.soc = esp32.soc()
+    self.cpu = esp32.xtensa(jtag_driver, _ofs, _ir_chain, self.soc)
+    self.soc.bind_cpu(self.cpu)
+    self.mem = mem.mem(self.cpu)
 
     self.menu_root = (
-      ('esp32', self.esp32.menu, 'esp32 functions'),
+      ('esp32', self.cpu.menu, 'esp32 functions'),
       ('jtag', self.jtag_driver.menu, 'jtag functions'),
       ('exit', self.cmd_exit),
       ('help', self.ui.cmd_help),
       ('history', self.ui.cmd_history, cli.history_help),
+      ('mem', self.mem.menu, 'memory functions'),
     )
 
     self.ui.cli.set_root(self.menu_root)

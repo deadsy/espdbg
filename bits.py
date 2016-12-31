@@ -22,9 +22,10 @@ import array
 
 class bits(object):
 
-  def __init__(self, n = 0):
+  def __init__(self, n = 0, val = 0):
+    val &= ((1 << n) - 1)
     self.n = n
-    self.val = 0
+    self.val = val
 
   def clear(self):
     """remove any contents"""
