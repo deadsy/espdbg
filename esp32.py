@@ -5,7 +5,7 @@ ESP32 Specific Interface
 #------------------------------------------------------------------------------
 
 import jtag
-import ocd
+import mini108
 import lib
 
 #------------------------------------------------------------------------------
@@ -38,13 +38,14 @@ class xtensa(object):
     # Dual core processor. There are 2 instruction registers in the JTAG chain.
     self.num_cores = 2
     self.device = [jtag.device(drv, ofs + i, irchain, XTENSA_IDCODE) for i in range(self.num_cores)]
-    self.ocd = [ocd.ocd(self.device[i]) for i in range(self.num_cores)]
-    self.core = 1
+    self.ocd = [mini108.ocd(self.device[i]) for i in range(self.num_cores)]
+    self.core = 0
     self.width = 32
     self.soc = soc
 
     self.menu = (
       ('info', self.cmd_info),
+      ('test', self.cmd_test),
     )
 
   def save_regs(self):
@@ -77,6 +78,13 @@ class xtensa(object):
   def cmd_info(self, ui, args):
     """display esp32 information"""
     ui.put('%s\n' % self)
+
+  def cmd_test(self, ui, args):
+    """test function"""
+    ui.put('0x%08x\n' % self.ocd[0].rd_idcode())
+    ui.put('0x%08x\n' % self.ocd[1].rd_idcode())
+    ui.put('0x%08x\n' % self.ocd[0].rd_idcode())
+    ui.put('0x%08x\n' % self.ocd[1].rd_idcode())
 
   def __str__(self):
     s = ['cpu%d: %s' % (i, str(self.device[i])) for i in range(self.num_cores)]
