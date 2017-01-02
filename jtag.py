@@ -111,22 +111,6 @@ class device(object):
     tdi.append_ones(self.irlen_after)
     self.driver.scan_ir(tdi)
 
-  def rw_ir(self, wr, rd):
-    """
-    read/write IR for a device
-    wr: bitbuffer to be written to ir for this device
-    rd: bitbuffer to be read from ir for this device
-    note - other devices are assumed to be in bypass mode
-    """
-    tdi = bits.bits()
-    tdi.append_ones(self.irlen_before)
-    tdi.append(wr)
-    tdi.append_ones(self.irlen_after)
-    self.driver.scan_ir(tdi, rd)
-    # strip the ir bits from the bypassed devices
-    rd.drop_msb(self.irlen_before)
-    rd.drop_lsb(self.irlen_after)
-
   def wr_dr(self, wr):
     """
     write to DR for a device
@@ -139,9 +123,21 @@ class device(object):
     tdi.append_ones(self.ndevs_after)
     self.driver.scan_dr(tdi)
 
-  def rw_dr(self, wr, rd):
+  def rd_dr(self, rd):
     """
-    read/write DR for a device
+    read n-bits from a DR register
+    note - other devices are assumed to be in bypass mode
+    """
+    # add bits for the bypassed devices
+    tdi = bits.bits(rd.n + self.ndevs_before + self.ndevs_after)
+    self.driver.scan_dr(tdi, rd)
+    # strip bits from the bypassed devices
+    rd.drop_msb(self.ndevs_after)
+    rd.drop_lsb(self.ndevs_before)
+
+  def wr_rd_dr(self, wr, rd):
+    """
+    write/read DR for a device
     wr: bitbuffer to be written to dr for this device
     rd: bitbuffer to be read from dr for this device
     note - other devices are assumed to be in bypass mode
@@ -152,8 +148,8 @@ class device(object):
     tdi.append_ones(self.ndevs_after)
     self.driver.scan_dr(tdi, rd)
     # strip the dr bits from the bypassed devices
-    rd.drop_msb(self.ndevs_before)
-    rd.drop_lsb(self.ndevs_after)
+    rd.drop_msb(self.ndevs_after)
+    rd.drop_lsb(self.ndevs_before)
 
   def irchain_str(self):
     """return a descriptive string for the irchain"""

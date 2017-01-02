@@ -140,7 +140,7 @@ PWRSTAT_MEMDOMAINON = (1<<1)
 PWRSTAT_COREDOMAINON = (1<<0)
 
 #-----------------------------------------------------------------------------
-# NAR addresses
+# Nexus Register Addresses
 
 # TRAX registers
 NARADR_TRAXID = 0x00
@@ -188,7 +188,7 @@ NARADR_CLAIMCLR = 0x69
 NARADR_LOCKACCESS = 0x6c
 NARADR_LOCKSTATUS = 0x6d
 NARADR_AUTHSTATUS = 0x6e
-NARADR_DEVID = 0x72
+NARADR_DEVID = 0x72 # Same as JTAG device ID
 NARADR_DEVTYPE = 0x73
 NARADR_PERID4 = 0x74
 NARADR_PERID7 = 0x77
@@ -207,19 +207,49 @@ class ocd(object):
 
   def wr_ir(self, val):
     """write instruction register"""
-    wr = bits.bits(_IR_LEN, val)
-    self.device.wr_ir(wr)
+    self.device.wr_ir(bits.bits(_IR_LEN, val))
+
+  def wr_dr(self, n, val):
+    """write current data register"""
+    self.device.wr_dr(bits.bits(n, val))
 
   def rd_dr(self, n):
-    """read n bits from the current dr register"""
-    wr = bits.bits(n)
+    """read from current data register"""
     rd = bits.bits(n)
-    self.device.rw_dr(wr, rd)
+    self.device.rd_dr(rd)
+    return rd.scan((n,))[0]
+
+  def wr_rd_dr(self, n, val):
+    """write and read from current data register"""
+    rd = bits.bits(n)
+    self.device.wr_rd_dr(bits.bits(n, val), rd)
     return rd.scan((n,))[0]
 
   def rd_idcode(self):
     """read from IDCODE"""
     self.wr_ir(_IR_IDCODE)
     return self.rd_dr(_IDCODE_LEN)
+
+  def rd_pwrstat_clr(self):
+    """read PWRSTAT and clear the *WASRESET bits"""
+    self.wr_ir(_IR_PWRSTAT)
+    return self.wr_rd_dr(_PWRSTAT_LEN, PWRSTAT_DEBUGWASRESET | PWRSTAT_COREWASRESET)
+
+  def wr_pwrctl(self, val):
+    """write PWRCTL"""
+    self.wr_ir(_IR_PWRCTL)
+    self.wr_dr(_PWRCTL_LEN, val)
+
+  def wr_nexus(self, reg, val):
+    """write a nexus register"""
+    self.wr_ir(_IR_NARSEL)
+    self.wr_dr(_NARSEL_ADRLEN, reg << 1 | 1)
+    self.wr_dr(_NARSEL_DATALEN, val)
+
+  def rd_nexus(self, reg):
+    """read a nexus register"""
+    self.wr_ir(_IR_NARSEL)
+    self.wr_dr(_NARSEL_ADRLEN, reg << 1 | 0)
+    return self.rd_dr(_NARSEL_DATALEN)
 
 #-----------------------------------------------------------------------------

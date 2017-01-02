@@ -81,10 +81,8 @@ class xtensa(object):
 
   def cmd_test(self, ui, args):
     """test function"""
-    ui.put('0x%08x\n' % self.ocd[0].rd_idcode())
-    ui.put('0x%08x\n' % self.ocd[1].rd_idcode())
-    ui.put('0x%08x\n' % self.ocd[0].rd_idcode())
-    ui.put('0x%08x\n' % self.ocd[1].rd_idcode())
+    ui.put('0: 0x%08x\n' % self.ocd[0].rd_pwrstat_clr())
+    ui.put('1: 0x%08x\n' % self.ocd[1].rd_pwrstat_clr())
 
   def __str__(self):
     s = ['cpu%d: %s' % (i, str(self.device[i])) for i in range(self.num_cores)]
