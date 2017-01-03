@@ -178,7 +178,7 @@ NARADR_DIR7 = 0x4F
 
 # Misc registers
 NARADR_PWRCTL = 0x58
-NARADR_PWRSTAT = 0x69
+NARADR_PWRSTAT = 0x59
 NARADR_ERISTAT = 0x5A
 
 # CoreSight registers
@@ -196,6 +196,39 @@ NARADR_PERID0 = 0x78
 NARADR_PERID3 = 0x7b
 NARADR_COMPID0 = 0x7c
 NARADR_COMPID3 = 0x7f
+
+# NARADR_DCRSET bits
+OCDDCR_ENABLEOCD = (1<<0)
+OCDDCR_DEBUGINTERRUPT = (1<<1)
+OCDDCR_INTERRUPTALLCONDS = (1<<2)
+OCDDCR_BREAKINEN = (1<<16)
+OCDDCR_BREAKOUTEN = (1<<17)
+OCDDCR_DEBUGSWACTIVE = (1<<20)
+OCDDCR_RUNSTALLINEN = (1<<21)
+OCDDCR_DEBUGMODEOUTEN = (1<<22)
+OCDDCR_BREAKOUTITO = (1<<24)
+OCDDCR_BREAKACKITO = (1<<25)
+
+# NARADR_DSR bits
+OCDDSR_EXECDONE = (1<<0)
+OCDDSR_EXECEXCEPTION = (1<<1)
+OCDDSR_EXECBUSY = (1<<2)
+OCDDSR_EXECOVERRUN = (1<<3)
+OCDDSR_STOPPED = (1<<4)
+OCDDSR_COREWROTEDDR = (1<<10)
+OCDDSR_COREREADDDR = (1<<11)
+OCDDSR_HOSTWROTEDDR = (1<<14)
+OCDDSR_HOSTREADDDR = (1<<15)
+OCDDSR_DEBUGPENDBREAK = (1<<16)
+OCDDSR_DEBUGPENDHOST = (1<<17)
+OCDDSR_DEBUGPENDTRAX = (1<<18)
+OCDDSR_DEBUGINTBREAK = (1<<20)
+OCDDSR_DEBUGINTHOST = (1<<21)
+OCDDSR_DEBUGINTTRAX = (1<<22)
+OCDDSR_RUNSTALLTOGGLE = (1<<23)
+OCDDSR_RUNSTALLSAMPLE = (1<<24)
+OCDDSR_BREACKOUTACKITI = (1<<25)
+OCDDSR_BREAKINITI = (1<<26)
 
 #-----------------------------------------------------------------------------
 
@@ -251,5 +284,22 @@ class ocd(object):
     self.wr_ir(_IR_NARSEL)
     self.wr_dr(_NARSEL_ADRLEN, reg << 1 | 0)
     return self.rd_dr(_NARSEL_DATALEN)
+
+  def check_dsr(self):
+    """check and clear the dsr value"""
+    clr = False
+    dsr = self.rd_nexus(NARADR_DSR)
+    if dsr & OCDDSR_EXECBUSY:
+      #LOG_ERROR("%s: %s (line %d): DSR (%08X) indicates target still busy!", target->cmd_name, function, line, intfromchars(dsr));
+      clr = True
+    if dsr & OCDDSR_EXECEXCEPTION:
+      #LOG_ERROR("%s: %s (line %d): DSR (%08X) indicates DIR instruction generated an exception!", target->cmd_name, function, line, intfromchars(dsr));
+      clr = True
+    if dsr & OCDDSR_EXECOVERRUN:
+      #LOG_ERROR("%s: %s (line %d): DSR (%08X) indicates DIR instruction generated an overrun!", target->cmd_name, function, line, intfromchars(dsr));
+      clr = True
+    if clr:
+      wr_nexus(NARADR_DSR, OCDDSR_EXECEXCEPTION | OCDDSR_EXECOVERRUN)
+
 
 #-----------------------------------------------------------------------------
