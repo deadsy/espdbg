@@ -235,7 +235,10 @@ OCDDSR_BREAKINITI = (1<<26)
 class ocd(object):
   """Xtensa ESP108/Mini108 OCD State Machine Control"""
 
-  def __init__(self, device):
+  pwrctl_cmd = PWRCTL_JTAGDEBUGUSE | PWRCTL_DEBUGWAKEUP | PWRCTL_MEMWAKEUP | PWRCTL_COREWAKEUP
+
+  def __init__(self, ui, device):
+    self.ui = ui
     self.device = device
 
   def wr_ir(self, val):
@@ -268,10 +271,20 @@ class ocd(object):
     self.wr_ir(_IR_PWRSTAT)
     return self.wr_rd_dr(_PWRSTAT_LEN, PWRSTAT_DEBUGWASRESET | PWRSTAT_COREWASRESET)
 
+  def rd_pwrstat(self):
+    """read PWRSTAT"""
+    self.wr_ir(_IR_PWRSTAT)
+    return self.rd_dr(_PWRSTAT_LEN)
+
   def wr_pwrctl(self, val):
     """write PWRCTL"""
     self.wr_ir(_IR_PWRCTL)
     self.wr_dr(_PWRCTL_LEN, val)
+
+  def rd_pwrctl(self):
+    """read PWRCTL"""
+    self.wr_ir(_IR_PWRCTL)
+    return self.rd_dr(_PWRCTL_LEN)
 
   def wr_nexus(self, reg, val):
     """write a nexus register"""
@@ -300,6 +313,27 @@ class ocd(object):
       clr = True
     if clr:
       wr_nexus(NARADR_DSR, OCDDSR_EXECEXCEPTION | OCDDSR_EXECOVERRUN)
+
+  def halt(self):
+    """halt the cpu"""
+    self.ui.put("%08x\n" % self.rd_nexus(NARADR_DSR))
+    self.wr_nexus(NARADR_DCRSET, OCDDCR_DEBUGINTERRUPT)
+    self.ui.put("%08x\n" % self.rd_nexus(NARADR_DSR))
+
+  def run(self):
+    """run the cpu"""
+    pass
+
+  def set_reset(self):
+    """reset the cpu"""
+    self.wr_pwrctl(ocd.pwrctl_cmd | PWRCTL_CORERESET)
+
+  def clr_reset(self, halt=False):
+    """deassert reset on the cpu"""
+    if halt:
+      # halt immediately
+      self.wr_nexus(NARADR_DCRSET, OCDDCR_DEBUGINTERRUPT)
+    self.wr_pwrctl(ocd.pwrctl_cmd)
 
 
 #-----------------------------------------------------------------------------

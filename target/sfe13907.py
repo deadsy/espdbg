@@ -63,6 +63,7 @@ Connection to ARM 20 Pin JTAG:
 import cli
 import esp32
 import mem
+import soc
 
 # -----------------------------------------------------------------------------
 
@@ -89,8 +90,8 @@ class target(object):
   def __init__(self, ui, jtag_driver):
     self.ui = ui
     self.jtag_driver = jtag_driver
-    self.soc = esp32.soc()
-    self.cpu = esp32.xtensa(jtag_driver, _ofs, _ir_chain, self.soc)
+    self.soc = esp32.make_soc()
+    self.cpu = esp32.xtensa(ui, jtag_driver, _ofs, _ir_chain, self.soc)
     self.soc.bind_cpu(self.cpu)
     self.mem = mem.mem(self.cpu)
 
@@ -100,12 +101,21 @@ class target(object):
       ('exit', self.cmd_exit),
       ('help', self.ui.cmd_help),
       ('history', self.ui.cmd_history, cli.history_help),
+      ('map', self.soc.cmd_map),
+      ('regs', self.cmd_regs, soc.help_regs),
       ('mem', self.mem.menu, 'memory functions'),
     )
 
     self.ui.cli.set_root(self.menu_root)
     self.set_prompt()
     self.jtag_driver.cmd_info(self.ui, None)
+
+  def cmd_regs(self, ui, args):
+    """display cpu/soc registers"""
+    if len(args) == 0:
+      self.cpu.cmd_regs(ui, args)
+    else:
+      self.soc.cmd_regs(ui, args)
 
   def set_prompt(self):
     # TODO get a run/halt state
