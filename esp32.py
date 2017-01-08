@@ -13,8 +13,147 @@ import soc
 
 #------------------------------------------------------------------------------
 
-# TIMERGROUPx: timg_dev_t
+# LEDC: ledc_dev_t
+_LEDC_regset = (
+  ('conf0_hs0', 32, 0x00, None, '0.0'),
+  ('hpoint_hs0', 32, 0x04, None, '0.0'),
+  ('duty_hs0', 32, 0x08, None, '0.0'),
+  ('conf1_hs0', 32, 0x0c, None, '0.0'),
+  ('duty_rd_hs0', 32, 0x10, None, '0.0'),
+  ('conf0_hs1', 32, 0x14, None, '0.1'),
+  ('hpoint_hs1', 32, 0x18, None, '0.1'),
+  ('duty_hs1', 32, 0x1c, None, '0.1'),
+  ('conf1_hs1', 32, 0x20, None, '0.1'),
+  ('duty_rd_hs1', 32, 0x24, None, '0.1'),
+  ('conf0_hs2', 32, 0x28, None, '0.2'),
+  ('hpoint_hs2', 32, 0x2c, None, '0.2'),
+  ('duty_hs2', 32, 0x30, None, '0.2'),
+  ('conf1_hs2', 32, 0x34, None, '0.2'),
+  ('duty_rd_hs2', 32, 0x38, None, '0.2'),
+  ('conf0_hs3', 32, 0x3c, None, '0.3'),
+  ('hpoint_hs3', 32, 0x40, None, '0.3'),
+  ('duty_hs3', 32, 0x44, None, '0.3'),
+  ('conf1_hs3', 32, 0x48, None, '0.3'),
+  ('duty_rd_hs3', 32, 0x4c, None, '0.3'),
+  ('conf0_hs4', 32, 0x50, None, '0.4'),
+  ('hpoint_hs4', 32, 0x54, None, '0.4'),
+  ('duty_hs4', 32, 0x58, None, '0.4'),
+  ('conf1_hs4', 32, 0x5c, None, '0.4'),
+  ('duty_rd_hs4', 32, 0x60, None, '0.4'),
+  ('conf0_hs5', 32, 0x64, None, '0.5'),
+  ('hpoint_hs5', 32, 0x68, None, '0.5'),
+  ('duty_hs5', 32, 0x6c, None, '0.5'),
+  ('conf1_hs5', 32, 0x70, None, '0.5'),
+  ('duty_rd_hs5', 32, 0x74, None, '0.5'),
+  ('conf0_hs6', 32, 0x78, None, '0.6'),
+  ('hpoint_hs6', 32, 0x7c, None, '0.6'),
+  ('duty_hs6', 32, 0x80, None, '0.6'),
+  ('conf1_hs6', 32, 0x84, None, '0.6'),
+  ('duty_rd_hs6', 32, 0x88, None, '0.6'),
+  ('conf0_hs7', 32, 0x8c, None, '0.7'),
+  ('hpoint_hs7', 32, 0x90, None, '0.7'),
+  ('duty_hs7', 32, 0x94, None, '0.7'),
+  ('conf1_hs7', 32, 0x98, None, '0.7'),
+  ('duty_rd_hs7', 32, 0x9c, None, '0.7'),
+  ('conf0_ls0', 32, 0xa0, None, '1.0'),
+  ('hpoint_ls0', 32, 0xa4, None, '1.0'),
+  ('duty_ls0', 32, 0xa8, None, '1.0'),
+  ('conf1_ls0', 32, 0xac, None, '1.0'),
+  ('duty_rd_ls0', 32, 0xb0, None, '1.0'),
+  ('conf0_ls1', 32, 0xb4, None, '1.1'),
+  ('hpoint_ls1', 32, 0xb8, None, '1.1'),
+  ('duty_ls1', 32, 0xbc, None, '1.1'),
+  ('conf1_ls1', 32, 0xc0, None, '1.1'),
+  ('duty_rd_ls1', 32, 0xc4, None, '1.1'),
+  ('conf0_ls2', 32, 0xc8, None, '1.2'),
+  ('hpoint_ls2', 32, 0xcc, None, '1.2'),
+  ('duty_ls2', 32, 0xd0, None, '1.2'),
+  ('conf1_ls2', 32, 0xd4, None, '1.2'),
+  ('duty_rd_ls2', 32, 0xd8, None, '1.2'),
+  ('conf0_ls3', 32, 0xdc, None, '1.3'),
+  ('hpoint_ls3', 32, 0xe0, None, '1.3'),
+  ('duty_ls3', 32, 0xe4, None, '1.3'),
+  ('conf1_ls3', 32, 0xe8, None, '1.3'),
+  ('duty_rd_ls3', 32, 0xec, None, '1.3'),
+  ('conf0_ls4', 32, 0xf0, None, '1.4'),
+  ('hpoint_ls4', 32, 0xf4, None, '1.4'),
+  ('duty_ls4', 32, 0xf8, None, '1.4'),
+  ('conf1_ls4', 32, 0xfc, None, '1.4'),
+  ('duty_rd_ls4', 32, 0x100, None, '1.4'),
+  ('conf0_ls5', 32, 0x104, None, '1.5'),
+  ('hpoint_ls5', 32, 0x108, None, '1.5'),
+  ('duty_ls5', 32, 0x10c, None, '1.5'),
+  ('conf1_ls5', 32, 0x110, None, '1.5'),
+  ('duty_rd_ls5', 32, 0x114, None, '1.5'),
+  ('conf0_ls6', 32, 0x118, None, '1.6'),
+  ('hpoint_ls6', 32, 0x11c, None, '1.6'),
+  ('duty_ls6', 32, 0x120, None, '1.6'),
+  ('conf1_ls6', 32, 0x124, None, '1.6'),
+  ('duty_rd_ls6', 32, 0x128, None, '1.6'),
+  ('conf0_ls7', 32, 0x12c, None, '1.7'),
+  ('hpoint_ls7', 32, 0x130, None, '1.7'),
+  ('duty_ls7', 32, 0x134, None, '1.7'),
+  ('conf1_ls7', 32, 0x138, None, '1.7'),
+  ('duty_rd_ls7', 32, 0x13c, None, '1.7'),
+  ('conf_hs0', 32, 0x140, None, '0.0'),
+  ('value_hs0', 32, 0x144, None, '0.0'),
+  ('conf_hs1', 32, 0x148, None, '0.1'),
+  ('value_hs1', 32, 0x14c, None, '0.1'),
+  ('conf_hs2', 32, 0x150, None, '0.2'),
+  ('value_hs2', 32, 0x154, None, '0.2'),
+  ('conf_hs3', 32, 0x158, None, '0.3'),
+  ('value_hs4', 32, 0x15c, None, '0.3'),
+  ('conf_ls0', 32, 0x160, None, '1.0'),
+  ('value_ls0', 32, 0x164, None, '1.0'),
+  ('conf_ls1', 32, 0x168, None, '1.1'),
+  ('value_ls1', 32, 0x16c, None, '1.1'),
+  ('conf_ls2', 32, 0x170, None, '1.2'),
+  ('value_ls2', 32, 0x174, None, '1.2'),
+  ('conf_ls3', 32, 0x178, None, '1.3'),
+  ('value_ls4', 32, 0x17c, None, '1.3'),
+  ('int_raw', 32, 0x180, None, 'interrupts raw'),
+  ('int_st', 32, 0x184, None, 'interrupts status'),
+  ('int_ena', 32, 0x188, None, 'interrupts enable'),
+  ('int_clr', 32, 0x18c, None, 'interrupts clear'),
+  ('conf', 32, 0x190, None, ''),
+  ('date', 32, 0x1fc, None, ''),
+)
 
+# UARTx: uart_dev_t
+_UART_regset = (
+  ('fifo', 32, 0x00, None, 'rx fifo byte'),
+  ('int_raw', 32, 0x04, None, 'interrupts raw'),
+  ('int_st', 32, 0x08, None, 'interrupts status'),
+  ('int_ena', 32, 0x0c, None, 'interrupts enable'),
+  ('int_clr', 32, 0x10, None, 'interrupts clear'),
+  ('clk_div', 32, 0x14, None, 'clock divider'),
+  ('auto_baud', 32, 0x18, None, 'auto baud'),
+  ('status', 32, 0x1c, None, ''),
+  ('conf0', 32, 0x20, None, ''),
+  ('conf1', 32, 0x24, None, ''),
+  ('lowpulse', 32, 0x28, None, 'minimum duration time for the low level pulse (baudrate detection)'),
+  ('highpulse', 32, 0x2c, None, 'maximum duration time for the high level pulse (baudrate detection)'),
+  ('rxd_cnt', 32, 0x30, None, ''),
+  ('flow_conf', 32, 0x34, None, ''),
+  ('sleep_conf', 32, 0x38, None, ''),
+  ('swfc_conf', 32, 0x3c, None, ''),
+  ('idle_conf', 32, 0x40, None, ''),
+  ('rs485_conf', 32, 0x44, None, ''),
+  ('at_cmd_precnt', 32, 0x48, None, ''),
+  ('at_cmd_postcnt', 32, 0x4c, None, ''),
+  ('at_cmd_gaptout', 32, 0x50, None, ''),
+  ('at_cmd_char', 32, 0x54, None, ''),
+  ('mem_conf', 32, 0x58, None, ''),
+  ('mem_tx_status', 32, 0x5c, None, ''),
+  ('mem_rx_status', 32, 0x60, None, ''),
+  ('mem_cnt_status', 32, 0x64, None, ''),
+  ('pospulse', 32, 0x68, None, ''),
+  ('negpulse', 32, 0x6c, None, ''),
+  ('date', 32, 0x78, None, ''),
+  ('id', 32, 0x7c, None, ''),
+)
+
+# TIMERGROUPx: timg_dev_t
 _TIMG_regset = (
   ('tim0_config', 32, 0x00, None, 'Timer0 config'),
   ('tim0_cnt_low', 32, 0x04, None, 'Register to store timer 0 time-base counter current value lower 32 bits'),
@@ -68,7 +207,7 @@ def make_soc():
   s.insert(soc.make_peripheral('DPORT', 0x3ff00000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('RSA', 0x3ff02000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('SHA', 0x3ff03000, 1 << 12, None, ''))
-  s.insert(soc.make_peripheral('UART', 0x3ff40000, 1 << 12, None, ''))
+  s.insert(soc.make_peripheral('uart0', 0x3ff40000, 1 << 12, _UART_regset, 'UART 0'))
   s.insert(soc.make_peripheral('SPI1', 0x3ff42000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('SPI0', 0x3ff43000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('GPIO', 0x3ff44000, 1 << 12, None, ''))
@@ -86,7 +225,7 @@ def make_soc():
   s.insert(soc.make_peripheral('HINF', 0x3ff4B000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('UHCI1', 0x3ff4C000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('I2S', 0x3ff4F000, 1 << 12, None, ''))
-  s.insert(soc.make_peripheral('UART1', 0x3ff50000, 1 << 12, None, ''))
+  s.insert(soc.make_peripheral('uart1', 0x3ff50000, 1 << 12, _UART_regset, 'UART 1'))
   s.insert(soc.make_peripheral('BT', 0x3ff51000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('I2C_EXT', 0x3ff53000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('UHCI0', 0x3ff54000, 1 << 12, None, ''))
@@ -94,7 +233,7 @@ def make_soc():
   s.insert(soc.make_peripheral('RMT', 0x3ff56000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('PCNT', 0x3ff57000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('SLC', 0x3ff58000, 1 << 12, None, ''))
-  s.insert(soc.make_peripheral('LEDC', 0x3ff59000, 1 << 12, None, ''))
+  s.insert(soc.make_peripheral('ledc', 0x3ff59000, 1 << 12, _LEDC_regset, 'LED Controller'))
   s.insert(soc.make_peripheral('EFUSE', 0x3ff5A000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('SPI_ENCRYPT', 0x3ff5B000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('PWM', 0x3ff5E000, 1 << 12, None, ''))
@@ -107,7 +246,7 @@ def make_soc():
   s.insert(soc.make_peripheral('EMAC', 0x3ff69000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('PWM1', 0x3ff6C000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('I2S1', 0x3ff6D000, 1 << 12, None, ''))
-  s.insert(soc.make_peripheral('UART2', 0x3ff6E000, 1 << 12, None, ''))
+  s.insert(soc.make_peripheral('uart2', 0x3ff6E000, 1 << 12, _UART_regset, 'UART 2'))
   s.insert(soc.make_peripheral('PWM2', 0x3ff6F000, 1 << 12, None, ''))
   s.insert(soc.make_peripheral('PWM3', 0x3ff70000, 1 << 12, None, ''))
   return s

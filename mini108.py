@@ -123,81 +123,136 @@ _BYPASS_LEN = 1
 # Power Control Register
 
 PWRCTL_JTAGDEBUGUSE = (1<<7)
-PWRCTL_DEBUGRESET = (1<<6)
-PWRCTL_CORERESET = (1<<4)
-PWRCTL_DEBUGWAKEUP = (1<<2)
-PWRCTL_MEMWAKEUP = (1<<1)
-PWRCTL_COREWAKEUP = (1<<0)
+PWRCTL_DEBUGRESET = (1<<6)  # set to assert debug module reset
+PWRCTL_CORERESET = (1<<4)   # set to assert core reset
+PWRCTL_DEBUGWAKEUP = (1<<2) # set to force debug domain to stay powered on
+PWRCTL_MEMWAKEUP = (1<<1)   # set to force memory domain to stay powered on
+PWRCTL_COREWAKEUP = (1<<0)  # set to force core to stay powered on
+
+PWRCTL_ALL_ON = PWRCTL_JTAGDEBUGUSE | PWRCTL_COREWAKEUP | PWRCTL_MEMWAKEUP | PWRCTL_DEBUGWAKEUP
+PWRCTL_DEBUG_ON = PWRCTL_JTAGDEBUGUSE | PWRCTL_DEBUGWAKEUP
 
 #-----------------------------------------------------------------------------
 # Power Status Register
 
-PWRSTAT_DEBUGWASRESET = (1<<6)
-PWRSTAT_COREWASRESET = (1<<4)
-PWRSTAT_CORESTILLNEEDED = (1<<3)
-PWRSTAT_DEBUGDOMAINON = (1<<2)
-PWRSTAT_MEMDOMAINON = (1<<1)
-PWRSTAT_COREDOMAINON = (1<<0)
+PWRSTAT_DEBUGWASRESET = (1<<6)    # set if debug module got reset
+PWRSTAT_COREWASRESET = (1<<4)     # set if core got reset
+PWRSTAT_CORESTILLNEEDED = (1<<3)  # set if others keeping core awake
+PWRSTAT_DEBUGDOMAINON = (1<<2)    # set if debug domain is powered on
+PWRSTAT_MEMDOMAINON = (1<<1)      # set if memory domain is powered on
+PWRSTAT_COREDOMAINON = (1<<0)     # set if core is powered on
+
+PWRSTAT_ALL_ON = PWRSTAT_COREDOMAINON | PWRSTAT_MEMDOMAINON | PWRSTAT_DEBUGDOMAINON
 
 #-----------------------------------------------------------------------------
-# Nexus Register Addresses
+# XDM/Nexus Register Addresses
 
-# TRAX registers
-NARADR_TRAXID = 0x00
-NARADR_TRAXCTRL = 0x01
-NARADR_TRAXSTAT = 0x02
-NARADR_TRAXDATA = 0x03
-NARADR_TRAXADDR = 0x04
-NARADR_TRIGGERPC = 0x05
-NARADR_PCMATCHCTRL = 0x06
-NARADR_DELAYCNT = 0x07
-NARADR_MEMADDRSTART = 0x08
-NARADR_MEMADDREND = 0x09
+# TRAX Registers
+XDM_TRAX_ID = 0x00          # ID
+XDM_TRAX_CONTROL = 0x01     # Control
+XDM_TRAX_STATUS = 0x02      # Status
+XDM_TRAX_DATA = 0x03        # Data
+XDM_TRAX_ADDRESS = 0x04     # Address
+XDM_TRAX_TRIGGER = 0x05     # Stop PC
+XDM_TRAX_MATCH = 0x06       # Stop PC Range
+XDM_TRAX_DELAY = 0x07       # Post Stop Trigger Capture Size
+XDM_TRAX_STARTADDR = 0x08   # Trace Memory Start
+XDM_TRAX_ENDADDR = 0x09     # Trace Memory End
+XDM_TRAX_DEBUGPC = 0x0F     # Debug PC
+XDM_TRAX_P4CHANGE = 0x10
+XDM_TRAX_TIME0 = 0x10       # First Time Register
+XDM_TRAX_P4REV = 0x11
+XDM_TRAX_TIME1 = 0x11       # Second Time Register
+XDM_TRAX_P4DATE = 0x12
+XDM_TRAX_INTTIME_MAX = 0x12 # maximal Value of Timestamp IntTime
+XDM_TRAX_P4TIME = 0x13
+XDM_TRAX_PDSTATUS = 0x14    # Sample of PDebugStatus
+XDM_TRAX_PDDATA = 0x15      # Sample of PDebugData
+XDM_TRAX_STOP_PC = 0x16
+XDM_TRAX_STOP_ICNT = 0x16
+XDM_TRAX_MSG_STATUS = 0x17
+XDM_TRAX_FSM_STATUS = 0x18
+XDM_TRAX_IB_STATUS = 0x19
+XDM_TRAX_STOPCNT = 0x1A
 
-# Performance monitor registers
-NARADR_PMG = 0x20
-NARADR_INTPC = 0x24
-NARADR_PM0 = 0x28
-NARADR_PM7 = 0x2F
-NARADR_PMCTRL0 = 0x30
-NARADR_PMCTRL7 = 0x37
-NARADR_PMSTAT0 = 0x38
-NARADR_PMSTAT7 = 0x3F
+# Performance Monitoring Counters
+XDM_PERF_PMG = 0x20     # perf. mon. global control register
+XDM_PERF_INTPC = 0x24   # perf. mon. interrupt PC
+XDM_PERF_PM0 = 0x28     # perf. mon. counter 0 value
+XDM_PERF_PM1 = 0x29     # perf. mon. counter 1 value
+XDM_PERF_PM2 = 0x2A     # perf. mon. counter 2 value
+XDM_PERF_PM3 = 0x2B     # perf. mon. counter 3 value
+XDM_PERF_PM4 = 0x2C     # perf. mon. counter 4 value
+XDM_PERF_PM5 = 0x2D     # perf. mon. counter 5 value
+XDM_PERF_PM6 = 0x2E     # perf. mon. counter 6 value
+XDM_PERF_PM7 = 0x2F     # perf. mon. counter 7 value
+XDM_PERF_PMCTRL0 = 0x30 # perf. mon. counter 0 control
+XDM_PERF_PMCTRL1 = 0x31 # perf. mon. counter 1 control
+XDM_PERF_PMCTRL2 = 0x32 # perf. mon. counter 2 control
+XDM_PERF_PMCTRL3 = 0x33 # perf. mon. counter 3 control
+XDM_PERF_PMCTRL4 = 0x34 # perf. mon. counter 4 control
+XDM_PERF_PMCTRL5 = 0x35 # perf. mon. counter 5 control
+XDM_PERF_PMCTRL6 = 0x36 # perf. mon. counter 6 control
+XDM_PERF_PMCTRL7 = 0x37 # perf. mon. counter 7 control
+XDM_PERF_PMSTAT0 = 0x38 # perf. mon. counter 0 status
+XDM_PERF_PMSTAT1 = 0x39 # perf. mon. counter 1 status
+XDM_PERF_PMSTAT2 = 0x3A # perf. mon. counter 2 status
+XDM_PERF_PMSTAT3 = 0x3B # perf. mon. counter 3 status
+XDM_PERF_PMSTAT4 = 0x3C # perf. mon. counter 4 status
+XDM_PERF_PMSTAT5 = 0x3D # perf. mon. counter 5 status
+XDM_PERF_PMSTAT6 = 0x3E # perf. mon. counter 6 status
+XDM_PERF_PMSTAT7 = 0x3F # perf. mon. counter 7 status
 
-# OCD registers
-NARADR_OCDID = 0x40
-NARADR_DCRCLR = 0x42
-NARADR_DCRSET = 0x43
-NARADR_DSR = 0x44
-NARADR_DDR = 0x45
-NARADR_DDREXEC = 0x46
-NARADR_DIR0EXEC = 0x47
-NARADR_DIR0 = 0x48
-NARADR_DIR1 = 0x49
-NARADR_DIR7 = 0x4F
+# On-Chip-Debug (OCD) Registers
+XDM_OCD_ID = 0x40       # ID register
+XDM_OCD_DCR_CLR = 0x42  # Debug Control reg clear
+XDM_OCD_DCR_SET = 0x43  # Debug Control reg set
+XDM_OCD_DSR = 0x44      # Debug Status reg
+XDM_OCD_DDR = 0x45      # Debug Data reg
+XDM_OCD_DDREXEC = 0x46  # Debug Data reg + execute-DIR
+XDM_OCD_DIR0EXEC = 0x47 # Debug Instruction reg, word 0 + execute-DIR
+XDM_OCD_DIR0 = 0x48     # Debug Instruction reg, word 0
+XDM_OCD_DIR1 = 0x49     # Debug Instruction reg, word 1
+XDM_OCD_DIR2 = 0x4A     # Debug Instruction reg, word 2
+XDM_OCD_DIR3 = 0x49     # Debug Instruction reg, word 3
+XDM_OCD_DIR4 = 0x4C     # Debug Instruction reg, word 4
+XDM_OCD_DIR5 = 0x4D     # Debug Instruction reg, word 5
+XDM_OCD_DIR6 = 0x4E     # Debug Instruction reg, word 6
+XDM_OCD_DIR7 = 0x4F     # Debug Instruction reg, word 7
 
-# Misc registers
-NARADR_PWRCTL = 0x58
-NARADR_PWRSTAT = 0x59
-NARADR_ERISTAT = 0x5A
+# Miscellaneous Registers
+XDM_MISC_PWRCTL = 0x58    # Power and Reset Control
+XDM_MISC_PWRSTAT = 0x59   # Power and Reset Status
+XDM_MISC_ERISTAT = 0x5A   # ERI Transaction Status
+XDM_MISC_DATETIME = 0x5D  # [INTERNAL] Timestamps of build
+XDM_MISC_UBID = 0x5E      # [INTERNAL] Build Unique ID
+XDM_MISC_CID = 0x5F       # [INTERNAL] Customer ID
 
-# CoreSight registers
-NARADR_ITCTRL = 0x60
-NARADR_CLAIMSET = 0x68
-NARADR_CLAIMCLR = 0x69
-NARADR_LOCKACCESS = 0x6c
-NARADR_LOCKSTATUS = 0x6d
-NARADR_AUTHSTATUS = 0x6e
-NARADR_DEVID = 0x72 # Same as JTAG device ID
-NARADR_DEVTYPE = 0x73
-NARADR_PERID4 = 0x74
-NARADR_PERID7 = 0x77
-NARADR_PERID0 = 0x78
-NARADR_PERID3 = 0x7b
-NARADR_COMPID0 = 0x7c
-NARADR_COMPID3 = 0x7f
+# CoreSight Compatibility Registers
+XDM_CS_ITCTRL = 0x60      # InTegration Mode control reg
+XDM_CS_CLAIMSET = 0x68    # Claim Tag Set reg
+XDM_CS_CLAIMCLR = 0x69    # Claim Tag Clear reg
+XDM_CS_LOCK_ACCESS = 0x6B # Lock Access (writing 0xC5ACCE55 unlocks)
+XDM_CS_LOCK_STATUS = 0x6D # Lock Status
+XDM_CS_AUTH_STATUS = 0x6E # Authentication Status
+XDM_CS_DEV_ID = 0x72      # Device ID
+XDM_CS_DEV_TYPE = 0x73    # Device Type
+XDM_CS_PER_ID4 = 0x74     # Peripheral ID reg byte 4
+XDM_CS_PER_ID5 = 0x75     # Peripheral ID reg byte 5
+XDM_CS_PER_ID6 = 0x76     # Peripheral ID reg byte 6
+XDM_CS_PER_ID7 = 0x77     # Peripheral ID reg byte 7
+XDM_CS_PER_ID0 = 0x78     # Peripheral ID reg byte 0
+XDM_CS_PER_ID1 = 0x79     # Peripheral ID reg byte 1
+XDM_CS_PER_ID2 = 0x7A     # Peripheral ID reg byte 2
+XDM_CS_PER_ID3 = 0x7B     # Peripheral ID reg byte 3
+XDM_CS_COMP_ID0 = 0x7C    # Component ID reg byte 0
+XDM_CS_COMP_ID1 = 0x7D    # Component ID reg byte 1
+XDM_CS_COMP_ID2 = 0x7E    # Component ID reg byte 2
+XDM_CS_COMP_ID3 = 0x7F    # Component ID reg byte 3
 
-# NARADR_DCRSET bits
+#-----------------------------------------------------------------------------
+
+# XDM_OCD_DCR_SET bits
 OCDDCR_ENABLEOCD = (1<<0)
 OCDDCR_DEBUGINTERRUPT = (1<<1)
 OCDDCR_INTERRUPTALLCONDS = (1<<2)
@@ -209,7 +264,7 @@ OCDDCR_DEBUGMODEOUTEN = (1<<22)
 OCDDCR_BREAKOUTITO = (1<<24)
 OCDDCR_BREAKACKITO = (1<<25)
 
-# NARADR_DSR bits
+# XDM_OCD_DSR bits
 OCDDSR_EXECDONE = (1<<0)
 OCDDSR_EXECEXCEPTION = (1<<1)
 OCDDSR_EXECBUSY = (1<<2)
@@ -230,12 +285,12 @@ OCDDSR_RUNSTALLSAMPLE = (1<<24)
 OCDDSR_BREACKOUTACKITI = (1<<25)
 OCDDSR_BREAKINITI = (1<<26)
 
+
+
 #-----------------------------------------------------------------------------
 
 class ocd(object):
   """Xtensa ESP108/Mini108 OCD State Machine Control"""
-
-  pwrctl_cmd = PWRCTL_JTAGDEBUGUSE | PWRCTL_DEBUGWAKEUP | PWRCTL_MEMWAKEUP | PWRCTL_COREWAKEUP
 
   def __init__(self, ui, device):
     self.ui = ui
@@ -301,7 +356,7 @@ class ocd(object):
   def check_dsr(self):
     """check and clear the dsr value"""
     clr = False
-    dsr = self.rd_nexus(NARADR_DSR)
+    dsr = self.rd_nexus(XDM_OCD_DSR)
     if dsr & OCDDSR_EXECBUSY:
       #LOG_ERROR("%s: %s (line %d): DSR (%08X) indicates target still busy!", target->cmd_name, function, line, intfromchars(dsr));
       clr = True
@@ -312,13 +367,13 @@ class ocd(object):
       #LOG_ERROR("%s: %s (line %d): DSR (%08X) indicates DIR instruction generated an overrun!", target->cmd_name, function, line, intfromchars(dsr));
       clr = True
     if clr:
-      wr_nexus(NARADR_DSR, OCDDSR_EXECEXCEPTION | OCDDSR_EXECOVERRUN)
+      wr_nexus(XDM_OCD_DSR, OCDDSR_EXECEXCEPTION | OCDDSR_EXECOVERRUN)
 
   def halt(self):
     """halt the cpu"""
-    self.ui.put("%08x\n" % self.rd_nexus(NARADR_DSR))
-    self.wr_nexus(NARADR_DCRSET, OCDDCR_DEBUGINTERRUPT)
-    self.ui.put("%08x\n" % self.rd_nexus(NARADR_DSR))
+    self.ui.put("%08x\n" % self.rd_nexus(XDM_OCD_DSR))
+    self.wr_nexus(XDM_OCD_DCR_SET, OCDDCR_DEBUGINTERRUPT)
+    self.ui.put("%08x\n" % self.rd_nexus(XDM_OCD_DSR))
 
   def run(self):
     """run the cpu"""
@@ -326,14 +381,14 @@ class ocd(object):
 
   def set_reset(self):
     """reset the cpu"""
-    self.wr_pwrctl(ocd.pwrctl_cmd | PWRCTL_CORERESET)
+    self.wr_pwrctl(PWRCTL_ALL_ON | PWRCTL_CORERESET)
 
   def clr_reset(self, halt=False):
     """deassert reset on the cpu"""
     if halt:
       # halt immediately
-      self.wr_nexus(NARADR_DCRSET, OCDDCR_DEBUGINTERRUPT)
-    self.wr_pwrctl(ocd.pwrctl_cmd)
+      self.wr_nexus(XDM_OCD_DCR_SET, OCDDCR_DEBUGINTERRUPT)
+    self.wr_pwrctl(PWRCTL_ALL_ON)
 
 
 #-----------------------------------------------------------------------------
