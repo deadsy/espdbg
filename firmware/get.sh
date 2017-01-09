@@ -26,4 +26,5 @@ ARGS="--chip esp32 --port /dev/ttyUSB1 --baud 115200"
 
 #$ESPTOOL $ARGS dump_mem 0x40000000 0x60000 irom0.bin
 #$ESPTOOL $ARGS dump_mem 0x3ff90000 0x10000 irom1.bin
-$ESPTOOL $ARGS dump_mem 0x3f400000 0x400000 eflash0.bin
+#$ESPTOOL $ARGS dump_mem 0x3f400000 0x400000 eflash0.bin
+$ESPTOOL $ARGS dump_mem 0x400c2000 0xb3e000 eflash1.bin
