@@ -1,0 +1,4 @@
+Chip ID: 0xe9240ac400c7
+Flash Manufacturer: ef
+Flash Device: 4016
+MAC: c4:00:c7:98:00:e9
